@@ -102,35 +102,37 @@ slidingWindowForSNPoutputDF <- function(SNPdf, windowSize = 1000, stepSize = 100
 
 
 ###
-#Input: Sliding window object
+#Input: Sliding window dataframe
 #return: dataframe summary
 ###
 
-analyzeSlidingWindows <- function(    ){     
-
+analyzeSlidingWindows<- function(allScaffoldsTracker){
 dfTracker <- data.frame(Scaffold=NA, window=NA, match=NA, value = NA, stringsAsFactors = FALSE)[numeric(0), ]
-loop = c(1:length(allScaffoldsTracker)) #make sure this s valid!
+ScaffoldList <- as.character((unique(allScaffoldsTracker$Scaffold)))
+loop = c(1:length(ScaffoldList)) #make sure this s valid!
 for (i in loop){
-  thisScaffold <- allScaffoldsTracker[[i]]
-  loopTwo = c(1:length(thisScaffold))
+  thisScaffold <- ScaffoldList[i]
+  thisScaffoldDF <- filter(allScaffoldsTracker, Scaffold == thisScaffold) #filter DF to this scaffold
+  windowList <- unique(thisScaffoldDF$Window) #determine how many windows are in this DF
+  loopTwo <- c(1:length(windowList))
   for (j in loopTwo){
-    thisWindow <- thisScaffold[[j]] 
-    thisWindow<-  group_by(thisWindow, Clade)
-    windowSum<- summarise(thisWindow, avg = mean(count), min = min(count), max = max(count))
+    thisWindow <-  windowList[j] 
+    thisWindowDF<- filter(thisScaffoldDF, Window==thisWindow)
+    windowSum<- summarise(group_by(thisWindowDF, Clade), avg = mean(count), min = min(count), max = max(count))
     FLTB <- filter(windowSum, Clade == 'FLTB'  ) #just FLTB
     notFLTB <- arrange(filter(windowSum, Clade != 'FLTB'  ), min)[1,]#lowest minimum, not FLTB
-    windowLoc<- names(thisScaffold)[j]
-    windowRange <- paste( windowLoc, "-", as.numeric(windowLoc) + windowSize, sep="")
+    windowRange <- paste( thisWindow, "-", as.numeric(thisWindow) + windowSize, sep="")
     if(nrow(notFLTB)  ==0) {   #If no FLTB snps, assume FLTB is best match
-      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisWindow$scaffoldRef[1], window=windowRange, match="FLTB", value=0 ))
+      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisScaffoldName, window=windowRange, match="FLTB", value=0 ))
       next } 
     if (is.na(notFLTB[1,1]) | is.na(FLTB[1,1])){next }
     else if (notFLTB[3] < FLTB[2] ){ #if the lowest number of SNPs  not in FLTB is less than the average FLTB snps...
-      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisWindow$scaffoldRef[1], window=windowRange, match=notFLTB$Clade[1], value=notFLTB$min[1] ))
+      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisScaffoldName, window=windowRange, match=notFLTB$Clade[1], value=notFLTB$min[1] ))
     }
     else if (notFLTB[3] > FLTB[2] ){ #
-      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisWindow$scaffoldRef[1], window=windowRange, match=FLTB$Clade[1], value=FLTB$avg[1] ))
-      }
+      dfTracker <- rbind(dfTracker, data.frame(Scaffold=thisScaffoldName, window=windowRange, match=FLTB$Clade[1], value=FLTB$avg[1] ))
     }
   }
+}
+return(dfTracker)
 }
