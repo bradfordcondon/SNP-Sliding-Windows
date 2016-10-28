@@ -85,15 +85,20 @@ slidingWindowForSNPoutputDF <- function(SNPdf, windowSize = 1000, stepSize = 100
       DFforRange<-  filter(subsetDF, locRef %in% thisRange)
       #summarize stats for this interval
       groupedDFrange<- summarise(group_by(DFforRange, fileName, Clade), count=n())
-      thisWindowDF <- summarise(groupedDFrange, count = n())
       #add back columns for the scaffold and window
-      thisWindowDF<- mutate(thisWindowDF, Scaffold = thisScaffold, Window = spots[j])
+      thisWindowDF<- mutate(groupedDFrange, Scaffold = thisScaffold, Window = spots[j])
       #Rbind this to DF
-    allScaffoldsTracker<- rbind(allScaffoldsTracker, thisWindowDF)      
+    allScaffoldsTracker<- rbind(allScaffoldsTracker, as.data.frame(thisWindowDF))    
           }
   }
   return(allScaffoldsTracker)
 }
+
+###
+#Not in
+#The inverse in %in%
+###
+`%not in%` <- function (x, table) is.na(match(x, table, nomatch=NA_integer_))
 
 
 ###
