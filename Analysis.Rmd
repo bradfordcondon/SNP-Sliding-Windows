@@ -244,8 +244,6 @@ For SNPs occuring on a given genome, are they usually very close together or spr
 ```{r, summaryStats,eval=TRUE}
 
 groupedBr80df<- group_by(dataSubsetBr80, scaffoldRef, fileName, Clade)
-
-
 br1kList <- br80lengths[as.numeric(br80lengths$length) > 1000,]
 grouped1kBr80<- filter(groupedBr80df, scaffoldRef %in% br1kList$scaffold)
 #subset data to scaffolds on the 1k list
@@ -253,7 +251,7 @@ grouped1kBr80<- filter(groupedBr80df, scaffoldRef %in% br1kList$scaffold)
 groupedBr801k2<- mutate(grouped1kBr80, percentLoc =(100*locRef/(br80lengths[as.character(br80lengths$scaffold)== scaffoldRef,2])) ) 
 
 
-sumsBr80<-  summarise(group_by(groupedBr80df2, scaffoldRef, fileName,  Clade),  count = n(), scaffoldSD = round(sd(percentLoc), digits =0))
+sumsBr80<-  summarise(group_by(groupedBr801k2, scaffoldRef, fileName,  Clade),  count = n(), scaffoldSD = round(sd(percentLoc), digits =0))
 
 
 ggplot(data = sumsBr80, aes(x =  fileName , y = scaffoldSD, fill = Clade ))+ geom_boxplot()+ ggtitle("SD of % SNP location, all scaffolds > 1kb, BR80")
@@ -265,19 +263,14 @@ ggplot(data = sumsBr80, aes(x =  log(count) , y = scaffoldSD, color = Clade ))+ 
 
 #filter sumsBr80 to those with at least 1,000 SNPs
 
-filter(flights, month == 1, day == 1)
-
 ggplot(data = filter(sumsBr80, count >= 500), aes(x =  fileName , y = scaffoldSD, fill = Clade ))+ geom_boxplot()+ ggtitle("SD of % SNP location, all scaffolds > 1kb and with > 500 SNPs, BR80")
 
-#http://www.statmethods.net/stats/anova.html
-fit <- aov(count ~ Clade, data=sumsBr80)
-fit <- manova(Clade ~ count*scaffoldSD, data = sumsBr80)
 ```
 
 repeat with IA
 ```{r}
 #sum SNPs for each filename for each scaffoldRef
-groupedIAdf<- group_by(dataSubsetIA1, scaffoldRef, fileName)
+groupedIAdf<- group_by(IA1AllSnpDF, scaffoldRef, fileName)
 IA1kList <- IA1lengths[as.numeric(IA1lengths$Length) > 1000,]
 grouped1kIA1<- filter(groupedIAdf, scaffoldRef %in% IA1kList$ID)
 #subset data to scaffolds on the 1k list
@@ -359,22 +352,12 @@ ggplot(data = br80scafAvg, aes(x =  Clade , y = meanNeighborDist, fill = Clade )
 ##Experimenting with plot types
 
 ###Plotting all
-Instead of manually subsetting some strains, can I make an "all included" plot work?
 
-Note: remove legend from below
 ```{r, allSamplesTogether}
 head(IA1AllSnpDF)
 i <- "IA1_scaffold00069"
 snpsToPlot<- IA1AllSnpDF[IA1AllSnpDF$scaffoldRef == i,]
 title <- paste("IA1", i, "experimental plot, freqpoly")
- ggplot(snpsToPlot, aes(x=locRef, color= fileName)) + geom_freqpoly(binwidth = 20)+ ggtitle(title)+xlab("IA1 position")+ facet_wrap(~Clade, drop = TRUE, ncol = 2)+ coord_cartesian(ylim = c(1, 10))
+ ggplot(snpsToPlot, aes(x=locRef, color= fileName)) + geom_freqpoly(binwidth = 20)+ ggtitle(title)+xlab("IA1 position")+ facet_wrap(~Clade, drop = TRUE, ncol = 2)+ coord_cartesian(ylim = c(1, 10))+ guides(color=FALSE)
  
-```
-
-
-Next idea:  Plot distance to mean for each group of SNPs.
-
-```{r, distanceToMeanPlot}
-#still work in progress
-  ggplot(sumsIA1, aes(x=scaffoldRef, y = scaffoldSD, color= fileName)) + geom_boxplot()+ ggtitle(title)+xlab("scaffold")
 ```
