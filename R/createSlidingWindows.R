@@ -17,3 +17,6 @@ save(IA1WindowsDF, file = "IA1Windows_df_1kb.robj")
 
 br80WindowsSummary <- analyzeSlidingWindows(br80WindowsDF)
 IA1WindowsSummary <- analyzeSlidingWindows(IA1WindowsDF)
+
+save(br80WindowsSummary, file = "br80Windows_df_1kb_summary.robj")
+save(IA1WindowsSummary, file = "IA10Windows_df_1kb_summary.robj")

@@ -13,9 +13,13 @@ source("R/helperFunctions.R")
 #Read in SNP reports and scaffold lengths
 BR80DF  <- readSNPReports("inputData/br80/")
 IA1SDF  <- readSNPReports("inputData/IA1/")
+WBKYDF <- readSNPReports("/Users/chet/uky/WBKY_SNP_reports/")
+
 
 br80AllSnpDF<-  trimFileNamesFromSNPTables(SNPFile = BR80DF, refName = "Br80")
 IA1AllSnpDF<-  trimFileNamesFromSNPTables(SNPFile = IA1SDF, refName = "IA1")
+WBKYSnpDF<-  trimFileNamesFromSNPTables(SNPFile = WBKYDF, refName = "WBKY")
+
 
 br80lengths <-read.table("supporting/Br80_length_report.txt")
 IA1lengths <- read.table("V1/supporting/IA1_length_report.txt")
@@ -68,4 +72,23 @@ for (i in loop){
 
 IA1AllSnpDF<- (IA1AllSnpDF[which(IA1AllSnpDF$Clade != ""),])
 
-save.image("IA1andBR80ReadSNPs.RDATA")
+datasetList<- unique(WBKYAllSnpDF$fileName)
+toRemove<- datasetList[!datasetList %in% clade_list$ID]
+#remove these from dataset
+WBKYAllSnpDF <-filter(WBKYAllSnpDF, fileName!= toRemove)
+
+#remove clade list items not found in thedataset
+clade_list_WBKY<- clade_list[clade_list$ID %in% WBKYAllSnpDF$fileName,]
+
+
+#Add clade to each SNP 
+loop <- c(1:length(clade_list_WBKY$ID))
+WBKYAllSnpDF$Clade <-""#introduce blank variable
+
+for (i in loop){
+  thisTaxon <- as.character(clade_list_WBKY$ID[i])
+  thisClade <- as.character(clade_list_WBKY[which(clade_list_WBKY$ID %in% thisTaxon),]$WG_clade)
+  WBKYAllSnpDF[which(WBKYAllSnpDF$fileName  %in% thisTaxon),]$Clade <-thisClade
+}
+
+save.image("LoadDataOut.RDATA")

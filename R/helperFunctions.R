@@ -136,3 +136,26 @@ for (i in loop){
 }
 return(dfTracker)
 }
+##
+#Plot SNPs to multiPDF
+#Requires: dataframe of SNPs, a name for the PDF.
+#Default arguments are for the binsize and the y limit
+##
+
+PlotSNPstoMultiPDF <- function( DFtoPrint , pdfName, binSize = 2000, ylim = 50 ){ 
+  fullLim = c(1, ylim)
+scaffoldList <- row.names(sort(table(DFtoPrint$scaffoldRef), decreasing = TRUE))
+pdf(pdfName, 8.5, 11)
+for (i in scaffoldList){
+  snpsToPlot<- DFtoPrint[DFtoPrint$scaffoldRef == i,]
+  title <- i
+  
+  if (nrow(snpsToPlot) > 0 ) { #dont try and print null
+    p <- ggplot(snpsToPlot, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = binSize)+ ggtitle(title)+xlab("Scaffold position")+
+        facet_wrap(~fileName, drop = TRUE, ncol = 2)+coord_cartesian(ylim = fullLim)
+    plot(p)
+  }
+}
+dev.off()
+
+}
