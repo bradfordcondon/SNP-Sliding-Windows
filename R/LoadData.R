@@ -91,4 +91,20 @@ for (i in loop){
   WBKYAllSnpDF[which(WBKYAllSnpDF$fileName  %in% thisTaxon),]$Clade <-thisClade
 }
 
+#BR7
+Br7DF <- readSNPReports("inputData/Br7/")
+br7AllSnpDF<-  trimFileNamesFromSNPTables(SNPFile = Br7DF, refName = "Br7")
+datasetList<- unique(br7AllSnpDF$fileName)
+toRemove<- datasetList[!datasetList %in% clade_list$ID]
+#remove these from dataset
+br7AllSnpDF <-filter(br7AllSnpDF, fileName!= toRemove)
+clade_list_BR7<- clade_list[clade_list$ID %in% br7AllSnpDF$fileName,]
+loop <- c(1:length(clade_list_BR7$ID))
+br7AllSnpDF$Clade <-""#introduce blank variable
+for (i in loop){
+  thisTaxon <- as.character(clade_list_BR7$ID[i])
+  thisClade <- as.character(clade_list_BR7[which(clade_list_BR7$ID %in% thisTaxon),]$WG_clade)
+  br7AllSnpDF[which(br7AllSnpDF$fileName  %in% thisTaxon),]$Clade <-thisClade
+}
+
 save.image("LoadDataOut.RDATA")

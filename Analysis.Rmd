@@ -71,6 +71,15 @@ ggplot(snpsGrouped, aes(x= fileName, y = SNPs, fill= Clade)) + geom_boxplot()+ g
 snpsGrouped2 <- filter(snpsGrouped, Clade != 'digitaria')
 ggplot(snpsGrouped2, aes(x= fileName, y = SNPs, fill= Clade)) + geom_boxplot()+ scale_y_log10()+ggtitle("Number of SNPs/scaffold against Br80")+ ylab("number of SNPs (log)") +  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + xlab("")
 
+
+#how many SNPs are there against BR80 and IA1 in each genome?
+
+br80byTaxon<- summarise(group_by(br80AllSnpDF, fileName), SNPs = n())
+kable(br80byTaxon)
+
+
+#kable(group_by(IA1, fileName), SNPs = n())
+
 ```
 
 We can see that the FLTB isolates have lower SNPs/scaffold.  Overall this plot isn't that informative because it isn't scaled by scaffold size.
@@ -97,7 +106,6 @@ What's interesting is that the general scaffold-by-scaffold % SNPs isn't *hugely
 
 
 ===
-===
 
 *goal*: examine SNP density in scaffold00050
 
@@ -112,6 +120,66 @@ snpsToPlot<- br80AllSnpDF[br80AllSnpDF$scaffoldRef == 'scaffold00050',]
 title <- paste("br80 vs all")
 ggplot(snpsToPlot, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = 2000)+ ggtitle("Br80 scaffold 50 v all")+xlab("Br80 position")+coord_cartesian(ylim = c(1, 50))+ facet_wrap(~fileName, drop = TRUE, ncol = 6)
 ```
+
+11-1-16
+
+Plot specific sacaffolds requested by mark
+
+```{r}
+kable(summarise(group_by(br80AllSnpDF, fileName), count=n()))
+
+dataSubsetBr80<- (br80AllSnpDF[which(br80AllSnpDF$fileName %in% c("WBKY", "IC17", "B2", "Br7", "T25", "IA1", "CHRF", "ML33", "SSFL14-3", "B51")),])
+dataSubsetBr80$fileName  <- factor(dataSubsetBr80$fileName, levels = c("SSFL14-3", "B2", "B51", "Br7", "T25", "CHRF", "WBKY", "IA1", "IC17", "ML33"))
+
+s37DF <- filter(dataSubsetBr80, scaffoldRef == 'scaffold00037')
+s50DF <- filter(dataSubsetBr80, scaffoldRef == 'scaffold00050')
+
+
+kable(summarise(group_by(s37DF, fileName, Clade), count=n()))
+
+
+
+kable(summarise(group_by(filter(br80AllSnpDF, scaffoldRef == 'scaffold00037'), fileName, Clade), count = n()))
+
+kable(summarise(group_by(filter(br80AllSnpDF, scaffoldRef == 'scaffold00050'), fileName, Clade), count = n()))
+
+
+
+binSize <- 2000
+
+  ggplot(s37DF, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = binSize)+ ggtitle("Br80 Scaffold 37")+xlab("Scaffold position")+    facet_wrap(~fileName, drop = TRUE, ncol = 2)+coord_cartesian(ylim = c(0,50))
+  ggplot(s50DF, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = binSize)+ ggtitle("Br80 Scaffold 50")+xlab("Scaffold position")+    facet_wrap(~fileName, drop = TRUE, ncol = 2)+coord_cartesian(ylim = c(0,50))
+  
+  
+  filter(s50DF, fileName == 'Br7')
+
+  
+   
+```
+
+##Corresponding Br7 scaffolds
+
+We want to look at Scaffold 31 in Br7.
+
+```{r}
+
+dataSubsetBr7<- (br7AllSnpDF[which(br7AllSnpDF$fileName %in% c("WBKY", "IC17", "B2", "Br80", "T25", "IA1", "CHRF", "ML33", "SSFL14-3", "B51")),])
+
+Br7Subset <- filter(dataSubsetBr7, scaffoldRef == 'scaffold00031')
+  ggplot(Br7Subset, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = binSize)+ ggtitle("Br7 Scaffold 31")+xlab("Scaffold position")+    facet_wrap(~fileName, drop = TRUE, ncol = 2)+coord_cartesian(ylim = c(0,50))
+
+  Br737ALL <- filter(br7AllSnpDF, scaffoldRef == 'scaffold00031')
+
+  kable(summarise(group_by(Br737ALL, fileName, Clade), count=n()))
+
+  ggplot(data = (summarise(group_by(Br737ALL, fileName, Clade), count=n())), aes(x=fileName, y=count, fill=Clade)) + geom_bar(stat = "identity")
+
+
+  
+```
+
+
+
 
 PL3-1, FT05-1 and wBKY are SNP dense.  What do those corresponding scaffolds look like in WBKY vs rice?
 
@@ -131,7 +199,6 @@ ggplot(snpsToPlot, aes(x=locRef, fill= Clade)) + geom_histogram(binwidth = 2000)
 ```
 
 
-====
 ====
 
 #Sliding windows
@@ -227,6 +294,15 @@ dataSubsetBr80$fileName  <- factor(dataSubsetBr80$fileName, levels = c("B2", "Br
 #plot all SNPs to PDF
 PlotSNPstoMultiPDF( dataSubsetBr80, pdfName = "Br80_SNPs_subset.pdf")
 
+
+##11-2-16
+#plot additional br80 with Bm88324 instead of ML33
+dataSubsetBr80<- (br80AllSnpDF[which(br80AllSnpDF$fileName %in% c("WBKY", "IC17", "B2", "Br7", "T25", "IA1", "CHRF", "Bm88324")),])
+#refactor for best order
+dataSubsetBr80$fileName  <- factor(dataSubsetBr80$fileName, levels = c("B2", "Br7", "T25", "CHRF", "WBKY", "IA1", "IC17", "Bm88324"))
+#plot all SNPs to PDF
+PlotSNPstoMultiPDF( dataSubsetBr80, pdfName = "Br80_SNPs_subset_Bm88324.pdf")
+
 ```
 
 Again, with the rice set
@@ -235,6 +311,20 @@ dataSubsetIA1<- (IA1AllSnpDF[which(IA1AllSnpDF$fileName %in% c("WBKY", "IC17",  
 PlotSNPstoMultiPDF(dataSubsetIA1, pdfName = "IA1_SNPs_subset.pdf")
 ```
 
+#Plotting specific scaffolds:
+
+
+```{r}
+
+#SSFL02
+
+dataSubsetBr80$fileName  <- factor(dataSubsetBr80$fileName, levels = c("B2", "Br7", "T25", "CHRF", "WBKY", "IA1", "IC17", "ML33", "SSFL02"))
+#plot all SNPs to PDF
+PlotSNPstoMultiPDF( dataSubsetBr80, pdfName = "Br80_SNPs_subset.pdf")
+
+```
+
+
 #calculating SNP dispersal
 
 What is the distribution of SNPs?/What percentage of all SNPs are on a given genome?
@@ -242,6 +332,9 @@ For SNPs occuring on a given genome, are they usually very close together or spr
 
 
 ```{r, summaryStats,eval=TRUE}
+dataSubsetBr80<- (br80AllSnpDF[which(br80AllSnpDF$fileName %in% c("WBKY", "IC17", "B2", "Br7", "T25", "IA1", "CHRF", "ML33")),])
+#refactor for best order
+dataSubsetBr80$fileName  <- factor(dataSubsetBr80$fileName, levels = c("B2", "Br7", "T25", "CHRF", "WBKY", "IA1", "IC17", "ML33"))
 
 groupedBr80df<- group_by(dataSubsetBr80, scaffoldRef, fileName, Clade)
 br1kList <- br80lengths[as.numeric(br80lengths$length) > 1000,]
