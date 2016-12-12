@@ -2,7 +2,6 @@ library(shiny)
 require(ggplot2)
 require(dplyr)
 #setwd("/Users/chet/uky/SNPdensityShinyDraft/")
-source("/Users/chet/uky/SNP_density_windows/R/HelperScripts.R")
 #Load in dataset.
 #in the future, rebuild this to allow for switching between multiple datasets
 source("helperFunctions.R")
@@ -64,10 +63,10 @@ server <- function(input, output) {
   #Plot out main window plot
   
   output$plotOfScaffold <- renderPlot({
-#    if (is.null(filtered())) {     return()  } #if our dataset is still null, dont try and draw it
+    if (is.null(filtered())) {     return()  } #if our dataset is still null, dont try and draw it
    datasetToPlot <-  chosenDF %>% filter (Scaffold ==  input$scaffoldInput ) #filter dataset to selected
    
-  toPlot <- outCladeMaxOnly(inputDF = convertToPercent(datasetToPlot, windowSize = 1000), toFilter= "wheat")
+  toPlot <- outCladeMaxOnly(inputDF = convertToPercent(datasetToPlot, windowSize = 1000), toFilter= c("TB", "FLTB", "Undefined"))
   plotMaxAncenstorWindow(toPlot, title = paste(input$scaffoldInput, "tile plot of most similar out taxa clade"),
                          numberOfBins=input$binsToPlot)
    
@@ -83,7 +82,7 @@ server <- function(input, output) {
     }
     datasetToPlot <-  chosenDF %>% filter (Scaffold ==  input$scaffoldInput ) #filter dataset to selected
     
-     toTable<-  outCladeMaxOnly(inputDF = convertToPercent(datasetToPlot, windowSize = 1000), toFilter= "wheat")
+     toTable<-  outCladeMaxOnly(inputDF = convertToPercent(datasetToPlot, windowSize = winSize), toFilter= c("TB", "FLTB", "Undefined"))
     
     toTable %>%  group_by(Clade) %>% summarise( NumberOf1kbWindowsAssigned= n()) #filter dataset to selected
      
