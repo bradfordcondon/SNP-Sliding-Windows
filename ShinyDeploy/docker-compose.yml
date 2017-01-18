@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  web:
+    image: bcondon/rshiny
+    ports: 
+    - "8080:3838"
+    volumes:
+    - ./ShinyViewSNPWindows/:/srv/shiny-server
