@@ -10,11 +10,20 @@ use Data::Dumper;  #for debugging
 use List::Util qw(min max sum);  
 use Getopt::Long;
 
-	my $directory = '/Users/chet/uky/SNP_density_windows/inputData/B71_SZL_reports/';
+
+
+	my $directory;
 	my $outfile = '_clade_list.txt';
 	my $cladeListReference = 'masterCladeList.txt';
 	my @fileList;
 	my %cladetracker;
+
+GetOptions( "d|directory=s" => \$directory);
+
+if (!$directory) {die "\nno directory  set with -d option.\n";  }
+
+
+
 
 #list files in directory
     opendir(DIR, $directory) or die $!;
@@ -42,7 +51,6 @@ close $fh;
 #create outfile handle
 my $sample= $fileList[1];
 $sample =~s/_.*//;
-print $sample; 
 
 #Open outfile
  open (my $oh, '>', $sample.$outfile) or die "could not open $outfile $!";	
@@ -52,8 +60,6 @@ print $sample;
 foreach my $thisFile (@fileList) { 
 	#remove ref tag
 	my $thisFileFull = $thisFile;
-	#$thisFile =~s/.*\///;#remove path prefix.  not necessary.
-	#$thisFile =~s/.fasta.*//;#remove extensions
 	$thisFile =~s/.*_v_//;#remove first half
 	$thisFile =~s/_.*//;#remove second half
 	#search for matching key

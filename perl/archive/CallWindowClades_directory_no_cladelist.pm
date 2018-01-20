@@ -11,7 +11,6 @@
 	use Data::Dumper;  #for debugging
 	use List::Util qw(min max sum);  
 	use Getopt::Long;
-	#require '/Users/chet/uky/SNP_density_windows/perl/Read_Window_Alignments.pl';
 
 
 
@@ -20,20 +19,22 @@
 
 #
 #Option variable
-#
-	my $directory = '/Users/chet/uky/SNP_density_windows/inputData/B71_SZL_reports/';
-	my $cladelist = 'B71_SZL_clade_list.txt';
+
+	my $directory = '/Users/chet/uky/SNP_density_windows/12-21-16-test/reports/';
+	my $cladelist;
 	my $windowsize = '1000';
 	my $stepsizemaster = '1000';
 	my $minsnpsite = '0';
 	my $mummer = 'FALSE';
 	my $maxPrimerSnp = '400';
-	my $lengthDataFile;
+	my $lengthDataFile = '/Users/chet/uky/SNP_density_windows/12-27-16_full/B71_SZL_lengthlist_named.txt';
 	my $outfile = 'outCladeWindows.txt';
 	my $outfile2 = 'averageWindowSNPsbyClade.txt';
-	my $windowCoverageHashFile = 'B71_uniquely_aligned';
+	my $windowCoverageHashDirectory;# '/Users/chet/uky/SNP_density_windows/12-26-16-test/B71_SZL_windows/'
+	my $cladeListReference= '/Users/chet/uky/SNP_density_windows/12-26-16-test/masterCladeList.txt';
 
 
+#/Users/chet/uky/SNP_density_windows/12-21-16-test
 #
 #Internal variables
 #
@@ -44,7 +45,7 @@
 	# read user options
 	GetOptions(
 		"d|directory=s" => \$directory,
-		"c|cladelist=s" => \$cladelist,
+		"p|coverageDirectory=s" => \$windowCoverageHashDirectory,
 		"w|windowsize=s" =>\$windowsize,
 		"s|stepsize=s" =>\$stepsizemaster,
 		"m|minsnpsite=s" =>\$minsnpsite,
@@ -68,34 +69,75 @@ if (!$lengthDataFile) {die "no length data file set -e.  \n";  }
 #Load in file of window alignment report
 ######
 print "reading in Report file for window alignments\n";
-my %windowCoverageHash = ReadWindowAlignment($windowCoverageHashFile);
+#my %windowCoverageHash = ReadWindowAlignment($windowCoverageHashFile);
 
-#output is :
-#  query name refScaffold refWindowStart 
-#	$outputArray{$quer}{$split[0]}{$split[1]} = $split[2];
 
- ###################################################                	   
-	### Load a list of species, host, clade. 
-	### Assign them to in or out clade arrays based on if we want them to group with or outside of the reference
- ###################################################                	   
+my @reportFiles = <$windowCoverageHashDirectory*>;
 
-my %cladetracker;
+my %windowCoverageHash;
+
+foreach my $file (@reportFiles) {   ##open each SNP file
+	print "working on $file \n!";
+
+ReadWindowAlignmentSeperateFile($file);
+
+			}	
+
+
+
 my %inverseCladeTracker;
-	
-open(my $fh, "<", $cladelist)
-or die "couldnt open '$cladelist' $!";		
+my %cladetracker;
+my %masterCladeTracker;
+#########
+#Read in master clade list.  Then, search directory to assign
+#
+#########
+
+open(my $fh, "<", $cladeListReference)
+
+or die "couldnt open '$cladeListReference' $!";		
 	while (<$fh>){
 	chomp;
-	my @split = split(/\s+/);
-	my $name = $split[0];
-	my $clade = $split[1];
-	$name = $directory.$name;
-	$cladetracker{$name} = $clade;
-	$inverseCladeTracker{$clade}{$name} = '1';					
-}
+	my @split = split(/\t/);
+	my $name = $split[1];
+	my $clade = $split[7];
+	#$name = $directory.$name;
+	$masterCladeTracker{$name} = $clade;
+		}
 close $fh;
 
-####
+
+my @fileList;
+
+
+#list files in directory
+    opendir(DIR, $directory) or die $!;
+    while (my $file = readdir(DIR)) {
+        next if ($file =~ m/^\./);#ignore hidden files
+	my $thisFileFull = $file;
+
+	$file =~s/.*_v_//;#remove first half
+	$file =~s/_.*//;#remove second half
+	#search for matching key
+	my $thisClade = $masterCladeTracker{$file};
+	#print out original name with clade match
+	if (defined $thisClade){
+		print  "$file\t$thisClade\n";
+		$cladetracker{$file} = $thisClade;
+	$inverseCladeTracker{$thisClade}{$file} = '1';					
+	}else { 
+		 print  "$thisFileFull\tUndefined\n";  
+		$cladetracker{$file} = "Undefined";
+	$inverseCladeTracker{"Undefined"}{$file} = '1';					
+
+	} 
+
+}
+   
+   closedir(DIR);
+
+
+
 
 
  ###################################################                	   
@@ -150,6 +192,7 @@ close $length_file;
 ####
 my %allWindowsByClade = %$allWindowsByClade;
 my %allWindowsAltArrange = %$allWindowsAltArrange;
+
 
 ####
 #Print out ALL snp values for every taxon.
@@ -241,7 +284,6 @@ close $oh2;
 						my $winsize = $windowsize+$i;			#our window range is our start to start + windowsize
 	
 					for ($i; $i <= $winsize; $i++) {	#check each nucleotide, 1 by 1, in our range, for a hash key		
-
 			$count++	if exists $hashcheck{$k}{$i};  #if we found a hash key, count it.  
 					}
 								
@@ -509,8 +551,6 @@ sub Clade_sliding_window {
 
 			for ($p; $p<= $max; $p= $p+($stepsize)) {   #this moves our window
 				foreach my $thisTaxon (keys $hash{$thisScaffold}){
-					my $backupTaxon = $thisTaxon;
-
 					my $count = 0;	#we're counting SNPs- restart counter at 0 for each window
 					my $i = $p;					#start window at scaffold bookmark	
 					my $winsize = $windowsize+$i;			#our window range is our start to start + windowsize
@@ -527,26 +567,32 @@ sub Clade_sliding_window {
 		}  	
 
 		###Look up this window in refHash to see how many nucs aligned
-		#first need to  cross over naming conventions.
-					$thisTaxon =~ s/B71_SZL_reports\/B71_SZL_masked_v_//;
-					$thisTaxon =~ s/_out//;
-
-my $nucsAlignedforWindow;
-		if (exists $windowCoverageHash{$thisTaxon}{$thisScaffold}{$start}){ 
-		$nucsAlignedforWindow = $windowCoverageHash{$thisTaxon}{$thisScaffold}{$start};
+					my $thisTaxonClip = removeRefandExtra($thisTaxon);
+	my $nucsAlignedforWindow;
+		if (exists $windowCoverageHash{$thisTaxonClip}{$thisScaffold}{$start}){ 
+		$nucsAlignedforWindow = $windowCoverageHash{$thisTaxonClip}{$thisScaffold}{$start};
 		}else{
-			print $log "$thisTaxon\t$thisScaffold\t$start\n";
+			#print $log "$thisTaxonClip\t$thisScaffold\t$start\n";
 			$nucsAlignedforWindow = 0;  #assume that there is no entry because there was no alignment.
 		}
 
 		my $adjustedSNP = $count + ($windowsize - $nucsAlignedforWindow);
 
-		$final{$thisScaffold}{$thisTaxon}{$start}{"count"} = $count;  #assign range to count value	
-		$final{$thisScaffold}{$thisTaxon}{$start}{"end"}	= $end;	
+		if ($adjustedSNP > $windowsize) {
+			print $log "$thisTaxonClip\t$thisScaffold\t$start\t$count\t$nucsAlignedforWindow\n";
+			#die "Error: more SNPs than window size.  Likely error in crosschecking hashes\n";
+		}
 
-		$finalAlt{$thisScaffold}{$start}{$thisTaxon}{"count"}	= $count;	
+		#print "Counted $count SNPs\n.  Now, Adjusting by adding $windowsize - $nucsAlignedforWindow\n";
+
+		$final{$thisScaffold}{$thisTaxonClip}{$start}{"count"} = $count;  #assign range to count value	
+		$final{$thisScaffold}{$thisTaxonClip}{$start}{"end"}	= $end;	
+
+		$finalAlt{$thisScaffold}{$start}{$thisTaxonClip}{"count"}	= $count;	
 		#$finalAlt{$thisScaffold}{$start}{$thisTaxon}{"end"}	= $end;	
-		$finalAlt{$thisScaffold}{$start}{$thisTaxon}{"adjustedCount"}	= $adjustedSNP;	
+		$finalAlt{$thisScaffold}{$start}{$thisTaxonClip}{"adjustedCount"}	= $adjustedSNP;	
+
+
 
 				}#done with this taxon
 			}  #done looping through  windows for this scaffold
@@ -576,18 +622,20 @@ sub DetermineBestClade {
 				my $thisAverage =0;
 				my $thisMin =0;
 				foreach my $thisTaxon (keys $inverseCladeTracker{$thisClade}){
-					#my $thisValue = $windowHash{$thisScaffold}{$start}{$thisTaxon}{"count"};
-					#two counts calculated.  One is adjusted based on the number of aligned nucs.
+					$thisTaxon=removeRefandExtra($thisTaxon);
 					my $thisValue = $windowHash{$thisScaffold}{$start}{$thisTaxon}{"adjustedCount"};
 					
 					push @taxonValues, $thisValue;
 					}
-					print Dumper(\@taxonValues);
 				#now, calculate average and minimum
-				if ( scalar @taxonValues > 0){
+				if ( scalar @taxonValues > 1 ){
 				$thisAverage = avg(@taxonValues);
 				$thisMin =  min(@taxonValues);  #undefined if empty
-				} else {$thisAverage = 0; $thisMin=0;}
+				} elsif(scalar @taxonValues ==1 ) {
+					$thisMin =  $taxonValues[0];
+					$thisAverage = 0;
+				 }
+				else {$thisAverage = 0; $thisMin= 0;}
 
 				$outTracker{$thisScaffold}{$start}{$thisClade}{'min'} = $thisMin;
 				
@@ -671,13 +719,7 @@ while (my $line = <$fh>) {
 		die "error: please check input format and header.\nFirst line should resemble:\nQuery: B71_SZL_masked	Subject: 87-120_masked\n";
 	}
 
-	#trim chr
-	$split[0]=~s/chr//;
-
-if ($split[0] =~ /ctg/) {
-	$split[0]=~s/ctg//;
-	$split[0] = $split[0]+ 7; 	#add 7 to it
-	}
+	
 
 	#format is scaffold, start, numberOfNucsAligned
 	$outputArray{$quer}{$split[0]}{$split[1]} = $split[2];
@@ -685,3 +727,49 @@ if ($split[0] =~ /ctg/) {
 return %outputArray;
 }
 
+##
+#Created 12-20-16
+#Another subroutine to read in reports on 1kb windows to determine how many nucs were aligned in the BLAST.
+#Unlike hte above script, this reads in a file where each file is just a tab delimited file, 
+#instead of above where the report had to be parsed and each pairwise comparison seperated.
+##
+
+sub ReadWindowAlignmentSeperateFile {
+	my $filename  = shift;
+
+open(my $fh, "<", $filename) or die "Could not open file '$filename' $!";
+
+while (my $line = <$fh>) {
+	chomp $line;
+	if ($line =~ /versus/) { 
+	next;
+	}#check if line type 1
+		my @split = split("\t", $line);
+
+	#format is scaffold, start, numberOfNucsAligned
+					
+					my $filenameadjust = removeRefandExtra($filename);
+
+
+	$windowCoverageHash{$filenameadjust}{$split[0]}{$split[1]} = $split[2];
+
+}
+
+
+}
+
+sub removePathAndExtension{
+my $string = shift;
+$string =~ s{.*/}{};      # removes path  
+$string =~ s{\.[^.]+$}{}; # removes extension
+return $string;
+}
+
+
+sub removeRefandExtra{
+my $string = shift;
+
+$string =~s{.*_v_}{};
+$string =~s{_.*}{};
+return $string;
+}

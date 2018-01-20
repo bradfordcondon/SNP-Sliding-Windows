@@ -1,0 +1,13 @@
+#Generate batch file
+
+for file in */;
+  do 
+  #
+
+perl CreateCladeList.pm -d $file
+
+#Run call windowsClade
+
+perl CallWindowsClades_report.pm -d $file -e B71_SZL_lengthlist_named -c $something;
+
+  done;
