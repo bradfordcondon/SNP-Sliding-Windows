@@ -9,20 +9,17 @@ require('ggplot2')
 require('RColorBrewer')
 
 ```
+# Data preparation
 
 
+## Input Data Structure
 
-Unfortunately for now the documentation is goign to be a bit minimal.
+File structure:
+`Strain_name/averageWindowSNPsbyClade.txt`
+Each strain also has a log.txt, reports folder, and windows folder.
 
 
-Input Data:
-
-Organized by strain:
-
-* Reports folder
-* windows folder
-* `averageWindowSNPsbyClade.txt`
-
+# Plotting the painters
 
 ```{r}
  #setwd("Users/chet/oldWork/uky/SNP_density_windows/")
@@ -60,3 +57,7 @@ print(p)
 } 
 
 ```
+
+Example output:
+
+![example painter output]("example_painter.png")
