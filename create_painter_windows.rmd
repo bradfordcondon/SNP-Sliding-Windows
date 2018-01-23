@@ -1,0 +1,62 @@
+
+Setup:
+
+```{r setup, include=FALSE}
+'%!in%' <- function(x,y)!('%in%'(x,y))
+require('dplyr')
+require('knitr')
+require('ggplot2')
+require('RColorBrewer')
+
+```
+
+
+
+Unfortunately for now the documentation is goign to be a bit minimal.
+
+
+Input Data:
+
+Organized by strain:
+
+* Reports folder
+* windows folder
+* `averageWindowSNPsbyClade.txt`
+
+
+```{r}
+ #setwd("Users/chet/oldWork/uky/SNP_density_windows/")
+myDirs = list.dirs("inputData/12-27-16_full", recursive = FALSE)
+
+outPath <- "output/outputPlots1-22-18/"
+dir.create(outPath, showWarnings = FALSE)
+
+for (thisDir in myDirs) {
+  FolderTrim<- gsub(".*/", "", thisDir) 
+  DF <- read.table(paste(thisDir, "/averageWindowSNPsbyClade.txt", sep=""), header=TRUE, fill = TRUE)
+percentSNPs <- DF %>% group_by(Scaffold, start) %>%
+  transform(adjustedminSNP= ((1000-minSNPs)/1000)*100 , AvgPercent = ((1000-avgnumSNPs)/1000*100))
+toFilterStrains <- c("")
+toFilterScaffolds <- c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7")
+percentSNPsfiltered <- percentSNPs %>% group_by(Scaffold, start, Clade) %>%
+  filter(Clade %!in% toFilterStrains, Scaffold %in% toFilterScaffolds)
+windowsMaxOnly<-  percentSNPsfiltered %>%group_by(Scaffold, start)%>%
+  filter(adjustedminSNP == max(adjustedminSNP))
+
+
+clearWinnersOnly<- windowsMaxOnly %>% group_by(Scaffold, start) %>% mutate( count=n()) %>% filter(count ==1) 
+
+
+clearWinnersOnly <- clearWinnersOnly %>% filter (alignedBases > 800)
+
+
+pdfName<- paste(outPath, "/", FolderTrim, "_B71mapped_subset_12-27-16.pdf", sep="")
+pdf(pdfName,11, 8.5)
+
+p<- ggplot(data =  clearWinnersOnly, aes(x= start, y= adjustedminSNP, color= Clade))+facet_wrap(~Scaffold, ncol = 1)+ylab("% similarity")+xlab("chrom pos")+
+   geom_point(size= .5, alpha = .5) + ggtitle(paste("% similarity", FolderTrim, "mapped to B71.  12-27-16"))+ ylim(c(0, 100))
+print(p)
+ dev.off()
+} 
+
+```
