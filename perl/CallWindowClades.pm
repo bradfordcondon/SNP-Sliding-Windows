@@ -27,13 +27,14 @@
 	my $minsnpsite = '0';
 	my $mummer = 'FALSE';
 	my $maxPrimerSnp = '400';
-	my $lengthDataFile = '/Users/chet/uky/SNP_density_windows/12-27-16_full/B71_SZL_lengthlist_named.txt';
+	my $lengthDataFile = '';
 	my $outfile = 'outCladeWindows.txt';
 	my $outfile2 = 'averageWindowSNPsbyClade.txt';
-	my $windowCoverageHashDirectory;
+	my $windowCoverageHashDirectory;# '/Users/chet/uky/SNP_density_windows/12-26-16-test/B71_SZL_windows/'
 	my $cladeListReference= '';
 
 
+#/Users/chet/uky/SNP_density_windows/12-21-16-test
 #
 #Internal variables
 #
