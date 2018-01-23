@@ -60,4 +60,4 @@ print(p)
 
 Example output:
 
-![example painter output]("example_painter.png")
+![example painter output](example_painter.png)
