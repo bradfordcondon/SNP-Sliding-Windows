@@ -32,6 +32,8 @@ Script modified to remove unnecessary clade list generation step.  New script ca
 
 `perl ../../perl/CallWindowClades_directory_no_cladelist.pm -d reports/ -p windows/`
 
+**Please note: Option variables are HARDCODED in these perl scripts**.  They'll need to be manually changed, or the script updated.
+
 So generating a batch script that loops through each directory is easy, considering each is run with the same default options.
 
 ```
