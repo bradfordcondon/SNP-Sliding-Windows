@@ -12,7 +12,7 @@ require('RColorBrewer')
 # Data preparation
 
 
-##Generation of data
+## Generation of data
 
 Data is generated starting with SNP reports.  Script can work either with Farman SNP-Finder, *or* MUMMER.  Below data is using SNP-finder generated reports.
 
@@ -26,15 +26,17 @@ Scripts invoked to generate data:
 * script0_count_length_and_masks.pl (create list of scaffold lengths given .FASTA for reference)
 * CallWindowClades.pm (create window list)
 
-#Full data
+# Full data
 
 Script modified to remove unnecessary clade list generation step.  New script can be executed with the following format:
 
-perl ../../perl/CallWindowClades_directory_no_cladelist.pm -d reports/ -p windows/
+`perl ../../perl/CallWindowClades_directory_no_cladelist.pm -d reports/ -p windows/`
 
 So generating a batch script that loops through each directory is easy, considering each is run with the same default options.
 
+```
 for d in */; do     cd "$d";     mkdir reports;     mkdir windows;     mv *_out.txt reports;     mv *_align.txt windows;     perl ../../perl/CallWindowClades_directory_no_cladelist_with_exclusion.pm -d reports/ -p windows/;     cd ..; done
+```
 
 ## Input Data Structure
 
