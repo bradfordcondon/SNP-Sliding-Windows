@@ -24,34 +24,41 @@ Each strain also has a log.txt, reports folder, and windows folder.
 ```{r}
  #setwd("Users/chet/oldWork/uky/SNP_density_windows/")
 myDirs = list.dirs("inputData/12-27-16_full", recursive = FALSE)
+date = Sys.Date()
 
-outPath <- "output/outputPlots1-22-18/"
+
+outPath <- paste("output/outPutPlots_" , date)
 dir.create(outPath, showWarnings = FALSE)
 
 for (thisDir in myDirs) {
+  #set up directory
   FolderTrim<- gsub(".*/", "", thisDir) 
   DF <- read.table(paste(thisDir, "/averageWindowSNPsbyClade.txt", sep=""), header=TRUE, fill = TRUE)
+  #transform the windows into percent snp
 percentSNPs <- DF %>% group_by(Scaffold, start) %>%
   transform(adjustedminSNP= ((1000-minSNPs)/1000)*100 , AvgPercent = ((1000-avgnumSNPs)/1000*100))
 toFilterStrains <- c("")
 toFilterScaffolds <- c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7")
+#only look in chromosomes 1-7
 percentSNPsfiltered <- percentSNPs %>% group_by(Scaffold, start, Clade) %>%
   filter(Clade %!in% toFilterStrains, Scaffold %in% toFilterScaffolds)
+
+## at this point we want to only take the "clear winners".
 windowsMaxOnly<-  percentSNPsfiltered %>%group_by(Scaffold, start)%>%
   filter(adjustedminSNP == max(adjustedminSNP))
 
-
 clearWinnersOnly<- windowsMaxOnly %>% group_by(Scaffold, start) %>% mutate( count=n()) %>% filter(count ==1) 
 
+#it only counts if 800/1000 bases were aligned
 
 clearWinnersOnly <- clearWinnersOnly %>% filter (alignedBases > 800)
 
 
-pdfName<- paste(outPath, "/", FolderTrim, "_B71mapped_subset_12-27-16.pdf", sep="")
+pdfName<- paste(outPath, "/", FolderTrim, "_B71mapped_subset_", date, "12-27-16.pdf", sep="")
 pdf(pdfName,11, 8.5)
 
 p<- ggplot(data =  clearWinnersOnly, aes(x= start, y= adjustedminSNP, color= Clade))+facet_wrap(~Scaffold, ncol = 1)+ylab("% similarity")+xlab("chrom pos")+
-   geom_point(size= .5, alpha = .5) + ggtitle(paste("% similarity", FolderTrim, "mapped to B71.  12-27-16"))+ ylim(c(0, 100))
+   geom_point(size= .5, alpha = .5) + ggtitle(paste("% similarity", FolderTrim, "mapped to B71.   " , date))+ ylim(c(0, 100))
 print(p)
  dev.off()
 } 
