@@ -555,7 +555,7 @@ sub Clade_sliding_window {
 			$nucsAlignedforWindow = 0;  #assume that there is no entry because there was no alignment.
 		}
 
-		my $adjustedSNP = $count + ($windowsize - $nucsAlignedforWindow);
+		my $adjustedSNP =  = $count * $windowsize/$nucsAlignedforWindow;
 
 		if ($adjustedSNP > $windowsize) {
 			print $log "$thisTaxonClip\t$thisScaffold\t$start\t$count\t$nucsAlignedforWindow\n";
